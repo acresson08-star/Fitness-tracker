@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>FitLog</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #f5f2ee;
+  --surface: #ffffff;
+  --surface2:#f0ede8;
+  --border:  #e5e0d8;
+  --text:    #1c1917;
+  --muted:   #9c9188;
+  --accent:  #6b8f5e;
+  --accent2: #c4763a;
+  --accent3: #5b7fa6;
+  --accent4: #9b6ea0;
+  --danger:  #c0392b;
+  --radius:  18px;
+  --shadow:  0 2px 12px rgba(0,0,0,0.06);
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  max-width: 480px;
+  margin: 0 auto;
+}
+header {
+  padding: 52px 24px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.header-top { display:flex; align-items:flex-start; justify-content:space-between; }
+.logo { font-family:'Fraunces',serif; font-size:28px; font-weight:700; color:var(--text); letter-spacing:-0.5px; line-height:1; }
+.logo em { font-style:normal; color:var(--accent); }
+.header-date { font-size:12px; color:var(--muted); text-align:right; line-height:1.4; margin-top:2px; }
+.tabs {
+  display:flex; gap:0; background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:0 8px; overflow-x:auto; scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar { display:none; }
+.tab {
+  flex-shrink:0; padding:12px 14px; font-size:13px; font-weight:500;
+  color:var(--muted); cursor:pointer; border:none; background:transparent;
+  border-bottom:2px solid transparent; transition:all 0.2s; white-space:nowrap;
+  font-family:'Inter',sans-serif;
+}
+.tab.active { color:var(--accent); border-bottom-color:var(--accent); font-weight:600; }
+.page { display:none; padding:20px 16px 40px; animation:fadeUp 0.2s ease; }
+.page.active { display:block; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.section-title {
+  font-family:'Fraunces',serif; font-size:20px; font-weight:600;
+  color:var(--text); margin-bottom:14px; letter-spacing:-0.3px;
+}
+.card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:20px; margin-bottom:14px; box-shadow:var(--shadow);
+}
+
+/* GOALS */
+.goals-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+.goals-title { font-family:'Fraunces',serif; font-size:17px; font-weight:600; color:var(--text); }
+.goals-subtitle { font-size:12px; color:var(--muted); margin-top:1px; }
+.btn-edit {
+  font-size:12px; color:var(--muted); background:var(--surface2);
+  border:1px solid var(--border); border-radius:20px; padding:5px 12px;
+  cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.15s;
+}
+.btn-edit:hover { color:var(--accent); border-color:var(--accent); }
+.goal-item { margin-bottom:14px; }
+.goal-item:last-child { margin-bottom:0; }
+.goal-meta { display:flex; align-items:center; justify-content:space-between; margin-bottom:7px; }
+.goal-label-wrap { display:flex; align-items:center; gap:7px; }
+.goal-emoji { font-size:15px; }
+.goal-label { font-size:13px; font-weight:500; color:var(--text); }
+.goal-check { font-size:13px; }
+.goal-fraction { font-size:12px; font-weight:600; color:var(--muted); transition:color 0.3s; font-variant-numeric:tabular-nums; }
+.goal-fraction.reached { color:var(--accent); }
+.goal-track { height:7px; background:var(--surface2); border-radius:99px; overflow:hidden; }
+.goal-fill { height:100%; border-radius:99px; width:0%; transition:width 0.7s cubic-bezier(.34,1.1,.64,1); }
+.goal-fill.pompes { background:var(--accent2); }
+.goal-fill.abdos  { background:var(--accent3); }
+.goal-fill.squats { background:var(--accent4); }
+.goal-fill.pas    { background:var(--accent);  }
+.goal-fill.reached { background:var(--accent) !important; }
+.goals-complete {
+  display:none; margin-top:14px; padding:12px 16px;
+  background:#eef5eb; border-radius:12px;
+  font-size:13px; font-weight:600; color:var(--accent); text-align:center;
+}
+.goals-complete.show { display:block; animation:fadeUp 0.3s ease; }
+.goals-edit { display:none; margin-top:16px; padding-top:16px; border-top:1px solid var(--border); }
+.goals-edit.open { display:block; }
+.edit-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+.edit-field { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:12px; }
+.edit-field label { display:block; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:4px; font-weight:500; }
+.edit-field input { width:100%; border:none; outline:none; background:transparent; font-size:20px; font-weight:600; color:var(--text); font-family:'Inter',sans-serif; }
+.btn-save-goals {
+  width:100%; background:var(--accent); color:#fff; border:none;
+  border-radius:12px; padding:12px; font-size:14px; font-weight:600;
+  cursor:pointer; font-family:'Inter',sans-serif; transition:opacity 0.15s;
+}
+.btn-save-goals:hover { opacity:0.88; }
+
+/* FORM */
+.form-date-row { display:flex; align-items:center; gap:10px; margin-bottom:18px; padding-bottom:16px; border-bottom:1px solid var(--border); }
+.form-date-row label { font-size:13px; color:var(--muted); font-weight:500; }
+.form-date-row input[type="date"] {
+  flex:1; background:var(--surface2); border:1px solid var(--border);
+  border-radius:10px; padding:9px 12px; font-size:14px;
+  font-family:'Inter',sans-serif; color:var(--text); outline:none;
+}
+.metrics-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+.metric-box {
+  background:var(--surface2); border:1.5px solid var(--border);
+  border-radius:14px; padding:14px 14px 10px; transition:border-color 0.2s;
+}
+.metric-box:focus-within { border-color:var(--accent); background:#fff; }
+.metric-box .m-icon { font-size:18px; margin-bottom:6px; display:block; }
+.metric-box label { display:block; font-size:10px; text-transform:uppercase; letter-spacing:0.7px; color:var(--muted); font-weight:600; margin-bottom:4px; }
+.metric-box input { width:100%; border:none; outline:none; background:transparent; font-size:24px; font-weight:600; color:var(--text); font-family:'Inter',sans-serif; font-variant-numeric:tabular-nums; }
+.metric-box input::placeholder { color:var(--border); }
+.metric-unit { font-size:11px; color:var(--muted); margin-top:1px; }
+.metric-existing { font-size:10px; color:var(--accent); margin-top:3px; font-weight:500; min-height:14px; }
+.photo-drop {
+  border:1.5px dashed var(--border); border-radius:14px; padding:18px;
+  text-align:center; cursor:pointer; position:relative; margin-bottom:12px; transition:all 0.2s;
+}
+.photo-drop:hover { border-color:var(--accent); background:#f5faf3; }
+.photo-drop input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+.photo-drop-icon { font-size:24px; margin-bottom:6px; }
+.photo-drop p { font-size:13px; color:var(--muted); }
+.photo-drop strong { color:var(--accent); }
+.photo-previews { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+.preview-wrap { position:relative; }
+.preview-wrap img { width:68px; height:68px; border-radius:10px; object-fit:cover; border:1.5px solid var(--border); display:block; }
+.preview-wrap button { position:absolute; top:-5px; right:-5px; width:18px; height:18px; background:var(--danger); color:#fff; border:none; border-radius:50%; font-size:9px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+textarea.notes {
+  width:100%; background:var(--surface2); border:1.5px solid var(--border);
+  border-radius:12px; color:var(--text); font-family:'Inter',sans-serif;
+  font-size:14px; padding:12px; resize:vertical; min-height:72px;
+  outline:none; margin-bottom:14px; transition:border-color 0.2s; line-height:1.5;
+}
+textarea.notes:focus { border-color:var(--accent); background:#fff; }
+textarea.notes::placeholder { color:var(--muted); }
+.btn-save {
+  width:100%; background:var(--text); color:#fff; border:none;
+  border-radius:14px; padding:16px; font-size:15px; font-weight:600;
+  cursor:pointer; font-family:'Inter',sans-serif; transition:opacity 0.15s;
+}
+.btn-save:hover { opacity:0.85; }
+
+/* TOAST */
+.toast {
+  position:fixed; bottom:28px; left:50%;
+  transform:translateX(-50%) translateY(70px);
+  background:var(--text); color:#fff; padding:11px 22px;
+  border-radius:30px; font-size:13px; font-weight:500; z-index:999;
+  transition:transform 0.35s cubic-bezier(.34,1.4,.64,1); white-space:nowrap;
+}
+.toast.show { transform:translateX(-50%) translateY(0); }
+
+/* HISTORY */
+.filter-row { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+.filter-chip {
+  padding:6px 14px; border-radius:20px; font-size:12px; font-weight:500;
+  cursor:pointer; border:1.5px solid var(--border); background:var(--surface);
+  color:var(--muted); transition:all 0.15s; font-family:'Inter',sans-serif;
+}
+.filter-chip.active { background:var(--text); color:#fff; border-color:var(--text); }
+.history-list { display:flex; flex-direction:column; gap:10px; }
+.h-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); }
+.h-card-head { display:flex; align-items:center; justify-content:space-between; padding:16px; cursor:pointer; user-select:none; }
+.h-date { font-family:'Fraunces',serif; font-size:16px; font-weight:600; color:var(--text); margin-bottom:4px; }
+.h-pills { display:flex; gap:5px; flex-wrap:wrap; }
+.h-pill { font-size:11px; padding:3px 8px; background:var(--surface2); border-radius:20px; color:var(--muted); font-weight:500; }
+.h-pill.hi { background:#eef5eb; color:var(--accent); }
+.h-chevron { color:var(--muted); font-size:12px; transition:transform 0.2s; }
+.h-card.open .h-chevron { transform:rotate(180deg); }
+.h-body { display:none; padding:0 16px 16px; border-top:1px solid var(--border); }
+.h-card.open .h-body { display:block; }
+.h-metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding-top:14px; margin-bottom:12px; }
+.h-m { background:var(--surface2); border-radius:12px; padding:10px 8px; text-align:center; }
+.h-m-icon { font-size:15px; margin-bottom:3px; }
+.h-m-val  { font-size:17px; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; }
+.h-m-lbl  { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.4px; margin-top:1px; }
+.h-photos { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+.h-photo { width:76px; height:76px; border-radius:10px; object-fit:cover; border:1px solid var(--border); cursor:pointer; transition:opacity 0.15s; }
+.h-photo:hover { opacity:0.85; }
+.h-notes { font-size:13px; color:var(--muted); margin-top:10px; line-height:1.55; font-style:italic; }
+.btn-del { margin-top:12px; background:transparent; border:1px solid #f0d0cc; color:var(--danger); border-radius:8px; padding:6px 12px; font-size:12px; cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.15s; }
+.btn-del:hover { background:#fdf3f2; }
+
+/* EMPTY */
+.empty { text-align:center; padding:60px 20px; color:var(--muted); }
+.empty-icon { font-size:42px; margin-bottom:12px; }
+.empty p { font-size:14px; line-height:1.6; }
+
+/* STATS */
+.period-row { display:flex; gap:6px; margin-bottom:16px; }
+.period-btn { flex:1; text-align:center; padding:8px 4px; border-radius:10px; font-size:12px; font-weight:600; cursor:pointer; border:1.5px solid var(--border); background:var(--surface); color:var(--muted); transition:all 0.15s; font-family:'Inter',sans-serif; }
+.period-btn.active { background:var(--text); color:#fff; border-color:var(--text); }
+.stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px 16px; box-shadow:var(--shadow); }
+.stat-icon { font-size:20px; margin-bottom:8px; }
+.stat-val { font-family:'Fraunces',serif; font-size:32px; font-weight:700; color:var(--text); line-height:1; letter-spacing:-0.5px; font-variant-numeric:tabular-nums; }
+.stat-lbl { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-top:5px; font-weight:600; }
+.stat-sub { font-size:11px; color:var(--muted); margin-top:4px; }
+.stat-trend { font-size:12px; font-weight:500; margin-top:5px; }
+.up   { color:#5a9e4a; }
+.down { color:var(--accent2); }
+.eq   { color:var(--muted); }
+.chart-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px 16px; margin-bottom:12px; box-shadow:var(--shadow); }
+.chart-lbl { font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:14px; }
+canvas { width:100% !important; }
+
+/* GALLERY */
+.gallery-month { margin-bottom:22px; }
+.gallery-month-title { font-family:'Fraunces',serif; font-size:15px; font-weight:600; color:var(--text); margin-bottom:10px; }
+.gallery-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.gallery-item img { width:100%; aspect-ratio:1; object-fit:cover; border-radius:10px; border:1px solid var(--border); cursor:pointer; transition:opacity 0.15s; }
+.gallery-item img:hover { opacity:0.88; }
+.gallery-item-date { font-size:10px; color:var(--muted); text-align:center; margin-top:3px; }
+
+/* LIGHTBOX */
+.lightbox { display:none; position:fixed; inset:0; background:rgba(28,25,23,0.9); z-index:1000; align-items:center; justify-content:center; padding:24px; }
+.lightbox.open { display:flex; }
+.lightbox img { max-width:100%; max-height:88vh; border-radius:12px; object-fit:contain; }
+.lb-close { position:absolute; top:20px; right:20px; width:40px; height:40px; background:rgba(255,255,255,0.15); border:none; border-radius:50%; color:#fff; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="logo">Fit<em>Log</em></div>
+    <div class="header-date" id="headerDate"></div>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('today')">Saisie</button>
+  <button class="tab" onclick="switchTab('history')">Historique</button>
+  <button class="tab" onclick="switchTab('stats')">Stats</button>
+  <button class="tab" onclick="switchTab('photos')">Photos</button>
+</div>
+
+<!-- SAISIE -->
+<div class="page active" id="page-today">
+  <div class="card" id="goalsCard">
+    <div class="goals-header">
+      <div>
+        <div class="goals-title">Objectifs du jour</div>
+        <div class="goals-subtitle" id="goalsDayLabel"></div>
+      </div>
+      <button class="btn-edit" onclick="toggleGoalsEdit()">Modifier</button>
+    </div>
+    <div id="goalsList"></div>
+    <div class="goals-complete" id="goalsComplete">🌿 Tous les objectifs atteints !</div>
+    <div class="goals-edit" id="goalsEditPanel">
+      <div class="edit-grid">
+        <div class="edit-field"><label>💪 Pompes</label><input type="number" id="gPompes" min="1"></div>
+        <div class="edit-field"><label>🔥 Abdos</label><input type="number" id="gAbdos" min="1"></div>
+        <div class="edit-field"><label>🦵 Squats</label><input type="number" id="gSquats" min="1"></div>
+        <div class="edit-field"><label>👟 Pas</label><input type="number" id="gPas" min="1"></div>
+      </div>
+      <button class="btn-save-goals" onclick="saveGoals()">Enregistrer</button>
+    </div>
+  </div>
+
+  <div class="section-title">Entrée du jour</div>
+  <div class="card">
+    <div class="form-date-row">
+      <label>Date</label>
+      <input type="date" id="entryDate" onchange="onDateChange()">
+    </div>
+    <div class="metrics-grid">
+      <div class="metric-box">
+        <span class="m-icon">⚖️</span>
+        <label>Poids</label>
+        <input type="number" id="iPoids" placeholder="70" step="0.1" min="0">
+        <div class="metric-unit">kg</div>
+        <div class="metric-existing" id="ePoids"></div>
+      </div>
+      <div class="metric-box">
+        <span class="m-icon">💪</span>
+        <label>Pompes</label>
+        <input type="number" id="iPompes" placeholder="0" min="0">
+        <div class="metric-unit">reps</div>
+        <div class="metric-existing" id="ePompes"></div>
+      </div>
+      <div class="metric-box">
+        <span class="m-icon">🔥</span>
+        <label>Abdos</label>
+        <input type="number" id="iAbdos" placeholder="0" min="0">
+        <div class="metric-unit">reps</div>
+        <div class="metric-existing" id="eAbdos"></div>
+      </div>
+      <div class="metric-box">
+        <span class="m-icon">🦵</span>
+        <label>Squats</label>
+        <input type="number" id="iSquats" placeholder="0" min="0">
+        <div class="metric-unit">reps</div>
+        <div class="metric-existing" id="eSquats"></div>
+      </div>
+      <div class="metric-box" style="grid-column:1/-1">
+        <span class="m-icon">👟</span>
+        <label>Pas</label>
+        <input type="number" id="iPas" placeholder="0" min="0">
+        <div class="metric-unit">pas</div>
+        <div class="metric-existing" id="ePas"></div>
+      </div>
+    </div>
+    <div class="photo-drop">
+      <input type="file" accept="image/*" multiple onchange="handlePhotos(this)">
+      <div class="photo-drop-icon">📸</div>
+      <p><strong>Ajouter des photos</strong> — glisser ou cliquer</p>
+    </div>
+    <div class="photo-previews" id="photoPreviews"></div>
+    <textarea class="notes" id="iNotes" placeholder="Notes du jour…"></textarea>
+    <button class="btn-save" onclick="saveEntry()">Enregistrer</button>
+  </div>
+</div>
+
+<!-- HISTORIQUE -->
+<div class="page" id="page-history">
+  <div class="section-title">Historique</div>
+  <div class="filter-row">
+    <button class="filter-chip active" onclick="filterHistory('all',this)">Tout</button>
+    <button class="filter-chip" onclick="filterHistory('7',this)">7 jours</button>
+    <button class="filter-chip" onclick="filterHistory('30',this)">30 jours</button>
+    <button class="filter-chip" onclick="filterHistory('90',this)">3 mois</button>
+  </div>
+  <div class="history-list" id="historyList"></div>
+</div>
+
+<!-- STATS -->
+<div class="page" id="page-stats">
+  <div class="section-title">Statistiques</div>
+  <div class="period-row">
+    <button class="period-btn active" onclick="switchPeriod('7',this)">7j</button>
+    <button class="period-btn" onclick="switchPeriod('30',this)">30j</button>
+    <button class="period-btn" onclick="switchPeriod('90',this)">3m</button>
+    <button class="period-btn" onclick="switchPeriod('365',this)">1an</button>
+    <button class="period-btn" onclick="switchPeriod('all',this)">Tout</button>
+  </div>
+  <div class="stats-grid" id="statsGrid"></div>
+  <div class="chart-card">
+    <div class="chart-lbl">Poids (kg)</div>
+    <canvas id="cWeight" height="130"></canvas>
+  </div>
+  <div class="chart-card">
+    <div class="chart-lbl">Entraînement total / jour</div>
+    <canvas id="cWorkout" height="120"></canvas>
+  </div>
+</div>
+
+<!-- PHOTOS -->
+<div class="page" id="page-photos">
+  <div class="section-title">Galerie</div>
+  <div id="photoGallery"></div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lb-close" onclick="closeLightbox()">✕</button>
+  <img id="lbImg" src="" alt="">
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const ENTRIES_KEY   = 'fitlog_entries_v1';
+const GOALS_KEY     = 'fitlog_goals_v1';
+const DEFAULT_GOALS = { pompes:100, abdos:100, squats:100, pas:10000 };
+
+function getEntries() { try { return JSON.parse(localStorage.getItem(ENTRIES_KEY))||[]; } catch { return []; } }
+function setEntries(e){ localStorage.setItem(ENTRIES_KEY, JSON.stringify(e)); }
+function getGoals()   { try { return JSON.parse(localStorage.getItem(GOALS_KEY))||DEFAULT_GOALS; } catch { return DEFAULT_GOALS; } }
+
+let pendingPhotos = [];
+let currentPeriod = '7';
+
+// ── INIT ──
+function init() {
+  const now = new Date();
+  document.getElementById('headerDate').innerHTML =
+    now.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
+  const today = now.toISOString().split('T')[0];
+  document.getElementById('entryDate').value = today;
+  prefillForm(today);
+  renderGoals();
+  renderHistory('all');
+  renderStats('7');
+  renderGallery();
+}
+
+// ── PREFILL — charge les valeurs existantes dans le formulaire ──
+function prefillForm(date) {
+  const entry = getEntries().find(e => e.date === date);
+  const keys  = ['poids','pompes','abdos','squats','pas'];
+  const ids   = ['iPoids','iPompes','iAbdos','iSquats','iPas'];
+  const hints = ['ePoids','ePompes','eAbdos','eSquats','ePas'];
+
+  ids.forEach((id, i) => {
+    const val  = entry ? entry[keys[i]] : null;
+    const inp  = document.getElementById(id);
+    const hint = document.getElementById(hints[i]);
+    if (val !== null && val !== undefined && val !== 0) {
+      inp.value = val;
+      hint.textContent = 'Enregistré : ' + (keys[i]==='pas' ? Number(val).toLocaleString() : val);
+    } else {
+      inp.value = '';
+      hint.textContent = '';
+    }
+  });
+
+  document.getElementById('iNotes').value = entry?.notes || '';
+  pendingPhotos = [];
+  renderPreviews();
+}
+
+function onDateChange() {
+  const date = document.getElementById('entryDate').value;
+  if (date) { prefillForm(date); renderGoals(); }
+}
+
+// ── PHOTOS ──
+function handlePhotos(input) {
+  Array.from(input.files).forEach(file => {
+    const r = new FileReader();
+    r.onload = e => { pendingPhotos.push(e.target.result); renderPreviews(); };
+    r.readAsDataURL(file);
+  });
+  input.value = '';
+}
+function renderPreviews() {
+  document.getElementById('photoPreviews').innerHTML = pendingPhotos.map((src,i) =>
+    '<div class="preview-wrap"><img src="'+src+'"><button onclick="removePhoto('+i+')">✕</button></div>'
+  ).join('');
+}
+function removePhoto(i) { pendingPhotos.splice(i,1); renderPreviews(); }
+
+// ── SAVE — merge avec l'entrée existante ──
+function saveEntry() {
+  const date = document.getElementById('entryDate').value;
+  if (!date) { showToast('Choisissez une date'); return; }
+
+  const entries  = getEntries();
+  const existing = entries.find(e => e.date === date) || {};
+
+  // Si le champ est vide → on garde l'ancienne valeur ; sinon on prend la nouvelle
+  function pick(inputId, oldVal, isFloat) {
+    const raw = document.getElementById(inputId).value.trim();
+    if (raw === '') return (oldVal ?? (isFloat ? null : 0));
+    return isFloat ? (parseFloat(raw)||null) : (parseInt(raw)||0);
+  }
+
+  const entry = {
+    id:     existing.id || Date.now(),
+    date,
+    poids:  pick('iPoids',  existing.poids,  true),
+    pompes: pick('iPompes', existing.pompes, false),
+    abdos:  pick('iAbdos',  existing.abdos,  false),
+    squats: pick('iSquats', existing.squats, false),
+    pas:    pick('iPas',    existing.pas,    false),
+    notes:  document.getElementById('iNotes').value.trim() || existing.notes || '',
+    photos: [...(existing.photos||[]), ...pendingPhotos],
+  };
+
+  const idx = entries.findIndex(e => e.date === date);
+  if (idx >= 0) entries[idx] = entry; else entries.unshift(entry);
+  setEntries(entries);
+
+  showToast('Enregistré ✓');
+  prefillForm(date);
+  renderGoals();
+}
+
+// ── GOALS ──
+function saveGoals() {
+  const goals = {
+    pompes: parseInt(document.getElementById('gPompes').value)||DEFAULT_GOALS.pompes,
+    abdos:  parseInt(document.getElementById('gAbdos').value) ||DEFAULT_GOALS.abdos,
+    squats: parseInt(document.getElementById('gSquats').value)||DEFAULT_GOALS.squats,
+    pas:    parseInt(document.getElementById('gPas').value)   ||DEFAULT_GOALS.pas,
+  };
+  localStorage.setItem(GOALS_KEY, JSON.stringify(goals));
+  document.getElementById('goalsEditPanel').classList.remove('open');
+  renderGoals();
+  showToast('Objectifs mis à jour');
+}
+
+function toggleGoalsEdit() {
+  const panel = document.getElementById('goalsEditPanel');
+  const goals = getGoals();
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) {
+    document.getElementById('gPompes').value = goals.pompes;
+    document.getElementById('gAbdos').value  = goals.abdos;
+    document.getElementById('gSquats').value = goals.squats;
+    document.getElementById('gPas').value    = goals.pas;
+  }
+}
+
+function renderGoals() {
+  const goals = getGoals();
+  const date  = document.getElementById('entryDate').value || new Date().toISOString().split('T')[0];
+  const entry = getEntries().find(e => e.date === date) || {};
+
+  document.getElementById('goalsDayLabel').textContent =
+    new Date(date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+
+  const rows = [
+    { key:'pompes', icon:'💪', label:'Pompes', cls:'pompes', val:entry.pompes||0, target:goals.pompes },
+    { key:'abdos',  icon:'🔥', label:'Abdos',  cls:'abdos',  val:entry.abdos ||0, target:goals.abdos  },
+    { key:'squats', icon:'🦵', label:'Squats', cls:'squats', val:entry.squats||0, target:goals.squats },
+    { key:'pas',    icon:'👟', label:'Pas',    cls:'pas',    val:entry.pas   ||0, target:goals.pas    },
+  ];
+
+  document.getElementById('goalsList').innerHTML = rows.map(r => {
+    const pct  = Math.min(100, Math.round(r.val/r.target*100));
+    const done = pct >= 100;
+    const dV   = r.key==='pas' ? r.val.toLocaleString()    : r.val;
+    const dT   = r.key==='pas' ? r.target.toLocaleString() : r.target;
+    return '<div class="goal-item">' +
+      '<div class="goal-meta">' +
+        '<div class="goal-label-wrap">' +
+          '<span class="goal-emoji">'+r.icon+'</span>' +
+          '<span class="goal-label">'+r.label+'</span>' +
+          (done ? '<span class="goal-check">✅</span>' : '') +
+        '</div>' +
+        '<span class="goal-fraction'+(done?' reached':'')+'">'+dV+' / '+dT+'</span>' +
+      '</div>' +
+      '<div class="goal-track">' +
+        '<div class="goal-fill '+r.cls+(done?' reached':'')+'" data-pct="'+pct+'" style="width:0%"></div>' +
+      '</div></div>';
+  }).join('');
+
+  document.getElementById('goalsComplete').classList.toggle('show', rows.every(r => r.val >= r.target));
+
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    document.querySelectorAll('.goal-fill').forEach(b => { b.style.width = b.dataset.pct+'%'; });
+  }));
+}
+
+// ── TABS ──
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', ['today','history','stats','photos'][i]===tab);
+  });
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+tab).classList.add('active');
+  if (tab==='history') renderHistory('all');
+  if (tab==='stats')   renderStats(currentPeriod);
+  if (tab==='photos')  renderGallery();
+}
+
+// ── HISTORY ──
+function filterHistory(period, btn) {
+  document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderHistory(period);
+}
+
+function renderHistory(period) {
+  let entries = getEntries();
+  if (period !== 'all') {
+    const cut = new Date(); cut.setDate(cut.getDate()-parseInt(period));
+    entries = entries.filter(e => e.date >= cut.toISOString().split('T')[0]);
+  }
+  const list = document.getElementById('historyList');
+  if (!entries.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>Aucune entrée pour cette période.</p></div>';
+    return;
+  }
+  list.innerHTML = entries.map(e => {
+    const photos = (e.photos||[]).map(s =>
+      '<img class="h-photo" src="'+s+'" onclick="openLightbox(\''+s+'\')">').join('');
+    return '<div class="h-card" id="hc-'+e.id+'">' +
+      '<div class="h-card-head" onclick="toggleHCard(\''+e.id+'\')">'+
+        '<div>'+
+          '<div class="h-date">'+fmtDate(e.date)+'</div>'+
+          '<div class="h-pills">'+
+            (e.poids  ? '<span class="h-pill hi">⚖️ '+e.poids+' kg</span>' : '')+
+            (e.pompes ? '<span class="h-pill">💪 '+e.pompes+'</span>' : '')+
+            (e.abdos  ? '<span class="h-pill">🔥 '+e.abdos+'</span>'  : '')+
+            (e.squats ? '<span class="h-pill">🦵 '+e.squats+'</span>' : '')+
+            (e.pas    ? '<span class="h-pill">👟 '+e.pas.toLocaleString()+'</span>' : '')+
+            ((e.photos&&e.photos.length) ? '<span class="h-pill">📸 '+e.photos.length+'</span>' : '')+
+          '</div>'+
+        '</div>'+
+        '<span class="h-chevron">▼</span>'+
+      '</div>'+
+      '<div class="h-body">'+
+        '<div class="h-metrics">'+
+          '<div class="h-m"><div class="h-m-icon">⚖️</div><div class="h-m-val">'+(e.poids??'—')+'</div><div class="h-m-lbl">kg</div></div>'+
+          '<div class="h-m"><div class="h-m-icon">💪</div><div class="h-m-val">'+(e.pompes||'—')+'</div><div class="h-m-lbl">pompes</div></div>'+
+          '<div class="h-m"><div class="h-m-icon">🔥</div><div class="h-m-val">'+(e.abdos||'—')+'</div><div class="h-m-lbl">abdos</div></div>'+
+          '<div class="h-m"><div class="h-m-icon">🦵</div><div class="h-m-val">'+(e.squats||'—')+'</div><div class="h-m-lbl">squats</div></div>'+
+          '<div class="h-m" style="grid-column:2/-1"><div class="h-m-icon">👟</div><div class="h-m-val">'+(e.pas?e.pas.toLocaleString():'—')+'</div><div class="h-m-lbl">pas</div></div>'+
+        '</div>'+
+        (e.notes ? '<div class="h-notes">"'+e.notes+'"</div>' : '')+
+        (photos  ? '<div class="h-photos">'+photos+'</div>' : '')+
+        '<button class="btn-del" onclick="deleteEntry('+e.id+')">Supprimer</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function toggleHCard(id) { document.getElementById('hc-'+id)?.classList.toggle('open'); }
+function deleteEntry(id) {
+  if (!confirm('Supprimer cette entrée ?')) return;
+  setEntries(getEntries().filter(e => e.id!==id));
+  renderHistory('all');
+  showToast('Entrée supprimée');
+}
+
+// ── STATS ──
+function switchPeriod(p, btn) {
+  currentPeriod = p;
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderStats(p);
+}
+
+function renderStats(period) {
+  let entries = getEntries();
+  if (period!=='all') {
+    const cut = new Date(); cut.setDate(cut.getDate()-parseInt(period));
+    entries = entries.filter(e => e.date>=cut.toISOString().split('T')[0]);
+  }
+  entries = [...entries].reverse();
+  const grid = document.getElementById('statsGrid');
+
+  if (!entries.length) {
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📊</div><p>Pas encore de données.</p></div>';
+    drawEmpty('cWeight',130); drawEmpty('cWorkout',120);
+    return;
+  }
+
+  const weights = entries.filter(e=>e.poids).map(e=>e.poids);
+  const lastW = weights[weights.length-1], firstW = weights[0];
+  const wDiff = weights.length>=2 ? (lastW-firstW).toFixed(1) : null;
+  const totP = entries.reduce((s,e)=>s+(e.pompes||0),0);
+  const totA = entries.reduce((s,e)=>s+(e.abdos||0),0);
+  const totS = entries.reduce((s,e)=>s+(e.squats||0),0);
+  const totPas = entries.reduce((s,e)=>s+(e.pas||0),0);
+  const avgPas = Math.round(totPas / (entries.filter(e=>e.pas>0).length||1));
+  const maxP = Math.max(...entries.map(e=>e.pompes||0));
+
+  let wHtml = '';
+  if (wDiff!==null) {
+    const cls = wDiff>0?'up':wDiff<0?'down':'eq';
+    wHtml = '<div class="stat-trend"><span class="'+cls+'">'+(wDiff>0?'+':'')+wDiff+' kg</span> sur la période</div>';
+  }
+
+  grid.innerHTML =
+    (weights.length ? '<div class="stat-card"><div class="stat-icon">⚖️</div><div class="stat-val">'+lastW+'</div><div class="stat-lbl">Dernier poids</div>'+wHtml+'</div>' : '') +
+    '<div class="stat-card"><div class="stat-icon">💪</div><div class="stat-val">'+totP.toLocaleString()+'</div><div class="stat-lbl">Pompes</div><div class="stat-sub">Record : '+maxP+'</div></div>' +
+    '<div class="stat-card"><div class="stat-icon">🔥</div><div class="stat-val">'+totA.toLocaleString()+'</div><div class="stat-lbl">Abdos</div></div>' +
+    '<div class="stat-card"><div class="stat-icon">🦵</div><div class="stat-val">'+totS.toLocaleString()+'</div><div class="stat-lbl">Squats</div></div>' +
+    '<div class="stat-card"><div class="stat-icon">👟</div><div class="stat-val">'+totPas.toLocaleString()+'</div><div class="stat-lbl">Pas total</div><div class="stat-sub">Moy. '+avgPas.toLocaleString()+' / j actif</div></div>' +
+    '<div class="stat-card"><div class="stat-icon">📅</div><div class="stat-val">'+entries.length+'</div><div class="stat-lbl">Jours enregistrés</div></div>';
+
+  drawWeightChart(entries);
+  drawWorkoutChart(entries);
+}
+
+function drawEmpty(id, h) {
+  const c = document.getElementById(id);
+  c.width  = c.offsetWidth * devicePixelRatio;
+  c.height = h * devicePixelRatio;
+  const ctx = c.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  ctx.fillStyle='#9c9188'; ctx.font='12px Inter'; ctx.textAlign='center';
+  ctx.fillText('Pas assez de données', c.offsetWidth/2, h/2);
+}
+
+function drawWeightChart(entries) {
+  const c = document.getElementById('cWeight'), H=130;
+  c.width = c.offsetWidth*devicePixelRatio; c.height = H*devicePixelRatio;
+  const ctx = c.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  const W = c.offsetWidth;
+  const wE = entries.filter(e=>e.poids);
+  if (wE.length<2) { drawEmpty('cWeight',H); return; }
+  const vals = wE.map(e=>e.poids);
+  const mn = Math.min(...vals)-0.5, mx = Math.max(...vals)+0.5;
+  const p = {t:10,b:20,l:36,r:10};
+  const iW=W-p.l-p.r, iH=H-p.t-p.b;
+  const xp=i=>p.l+(i/(wE.length-1))*iW;
+  const yp=v=>p.t+(1-(v-mn)/(mx-mn))*iH;
+  ctx.strokeStyle='#e5e0d8'; ctx.lineWidth=1;
+  [0,1,2].forEach(i=>{
+    const y=p.t+(i/2)*iH;
+    ctx.beginPath(); ctx.moveTo(p.l,y); ctx.lineTo(p.l+iW,y); ctx.stroke();
+    ctx.fillStyle='#9c9188'; ctx.font='9px Inter'; ctx.textAlign='right';
+    ctx.fillText((mx-(i/2)*(mx-mn)).toFixed(1), p.l-4, y+3);
+  });
+  ctx.beginPath(); ctx.moveTo(xp(0),yp(vals[0]));
+  vals.forEach((_,i)=>{ if(i>0) ctx.lineTo(xp(i),yp(vals[i])); });
+  ctx.lineTo(xp(wE.length-1),p.t+iH); ctx.lineTo(p.l,p.t+iH); ctx.closePath();
+  const g=ctx.createLinearGradient(0,p.t,0,p.t+iH);
+  g.addColorStop(0,'rgba(107,143,94,0.15)'); g.addColorStop(1,'rgba(107,143,94,0)');
+  ctx.fillStyle=g; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(xp(0),yp(vals[0]));
+  vals.forEach((_,i)=>{ if(i>0) ctx.lineTo(xp(i),yp(vals[i])); });
+  ctx.strokeStyle='#6b8f5e'; ctx.lineWidth=2; ctx.stroke();
+  vals.forEach((_,i)=>{
+    ctx.beginPath(); ctx.arc(xp(i),yp(vals[i]),3.5,0,Math.PI*2);
+    ctx.fillStyle='#6b8f5e'; ctx.fill();
+    ctx.beginPath(); ctx.arc(xp(i),yp(vals[i]),1.5,0,Math.PI*2);
+    ctx.fillStyle='#fff'; ctx.fill();
+  });
+}
+
+function drawWorkoutChart(entries) {
+  const c = document.getElementById('cWorkout'), H=120;
+  c.width = c.offsetWidth*devicePixelRatio; c.height = H*devicePixelRatio;
+  const ctx = c.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  const W = c.offsetWidth;
+  const vals = entries.map(e=>(e.pompes||0)+(e.abdos||0)+(e.squats||0));
+  if (entries.length<2) { drawEmpty('cWorkout',H); return; }
+  const mx = Math.max(...vals,1);
+  const p={t:10,b:4,l:36,r:10};
+  const iW=W-p.l-p.r, iH=H-p.t-p.b;
+  const bW=Math.max(2,iW/vals.length-2);
+  vals.forEach((v,i)=>{
+    const x=p.l+(i/vals.length)*iW, bH=(v/mx)*iH;
+    ctx.fillStyle = v>0 ? '#c4763a' : '#f0ede8';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x,p.t+iH-bH,bW,bH,[3,3,0,0]);
+    else ctx.rect(x,p.t+iH-bH,bW,bH);
+    ctx.fill();
+  });
+  ctx.fillStyle='#9c9188'; ctx.font='9px Inter'; ctx.textAlign='right';
+  ctx.fillText(mx, p.l-4, p.t+8);
+  ctx.fillText('0', p.l-4, p.t+iH+3);
+}
+
+// ── GALLERY ──
+function renderGallery() {
+  const gallery = document.getElementById('photoGallery');
+  const all = [];
+  getEntries().forEach(e=>(e.photos||[]).forEach(s=>all.push({src:s,date:e.date})));
+  if (!all.length) {
+    gallery.innerHTML='<div class="empty"><div class="empty-icon">📷</div><p>Ajoutez des photos lors de vos saisies !</p></div>';
+    return;
+  }
+  const byMonth = {};
+  all.forEach(p=>{ const m=p.date.substring(0,7); (byMonth[m]=byMonth[m]||[]).push(p); });
+  gallery.innerHTML = Object.keys(byMonth).sort().reverse().map(m=>{
+    const [y,mo]=m.split('-');
+    const label=new Date(y,mo-1,1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+    return '<div class="gallery-month"><div class="gallery-month-title">'+label+'</div><div class="gallery-grid">'+
+      byMonth[m].map(p=>'<div class="gallery-item"><img src="'+p.src+'" onclick="openLightbox(\''+p.src+'\')"><div class="gallery-item-date">'+fmtDate(p.date)+'</div></div>').join('')+
+    '</div></div>';
+  }).join('');
+}
+
+// ── LIGHTBOX ──
+function openLightbox(src) { document.getElementById('lbImg').src=src; document.getElementById('lightbox').classList.add('open'); }
+function closeLightbox()    { document.getElementById('lightbox').classList.remove('open'); }
+
+// ── UTILS ──
+function fmtDate(d) { return new Date(d+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short',year:'numeric'}); }
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+init();
+</script>
+</body>
+</html>
